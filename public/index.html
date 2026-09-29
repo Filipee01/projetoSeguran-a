@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Craque do Jogo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="container topo-inner">
+      <span class="marca">Craque do Jogo</span>
+    </div>
+  </header>
+
+  <!-- Votação -->
+  <section class="hero">
+    <div class="container">
+      <p class="sobretitulo">Votação da partida</p>
+      <h1>Quem foi o craque do jogo?</h1>
+      <p class="subtitulo">Escolha o melhor jogador da partida. Cada voto é autenticado pelo servidor com um código MAC.</p>
+
+      <div class="confronto">
+        <article class="jogador jogador-brasil">
+          <div class="foto">
+            <img src="assets/ronaldo.png" alt="Ronaldo Fenômeno">
+            <span class="pais">Brasil</span>
+          </div>
+          <div class="jogador-info">
+            <h2>Ronaldo <span>Fenômeno</span></h2>
+            <p class="contagem"><strong id="votos-jogador1">0</strong> votos</p>
+            <button class="btn-votar" data-jogador="jogador1">Votar em Ronaldo</button>
+          </div>
+        </article>
+
+        <div class="vs">VS</div>
+
+        <article class="jogador jogador-franca">
+          <div class="foto">
+            <img src="assets/zidane.jpg" alt="Zinedine Zidane">
+            <span class="pais">França</span>
+          </div>
+          <div class="jogador-info">
+            <h2>Zinedine <span>Zidane</span></h2>
+            <p class="contagem"><strong id="votos-jogador2">0</strong> votos</p>
+            <button class="btn-votar" data-jogador="jogador2">Votar em Zidane</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="placar">
+        <span id="pct-jogador1">0%</span>
+        <div class="barra">
+          <div id="barra-jogador1" class="barra-brasil"></div>
+          <div id="barra-jogador2" class="barra-franca"></div>
+        </div>
+        <span id="pct-jogador2">0%</span>
+      </div>
+
+      <button id="zerar" class="btn-zerar">Zerar votos</button>
+    </div>
+  </section>
+
+  <main class="container conteudo">
+    <!-- 01: resultado da verificação do último voto -->
+    <section class="painel">
+      <div class="painel-cab">
+        <span class="num">01</span>
+        <div>
+          <h3>Verificação da mensagem</h3>
+          <p>O que o servidor recebeu no último voto e como ele decidiu.</p>
+        </div>
+      </div>
+      <div class="etapas">
+        <div class="etapa">
+          <span class="etapa-rot">Mensagem autenticada</span>
+          <code id="info-mensagem" class="valor">Nenhum voto enviado ainda</code>
+        </div>
+        <div class="etapa">
+          <span class="etapa-rot">MAC enviado · HMAC-SHA256</span>
+          <code id="info-mac" class="valor">—</code>
+        </div>
+        <div class="etapa">
+          <span class="etapa-rot">Resultado no servidor</span>
+          <div id="info-resultado" class="resultado">Aguardando voto</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02: adulteração controlada -->
+    <section class="painel" id="painel-demo">
+      <div class="painel-cab">
+        <span class="num">02</span>
+        <div>
+          <h3>Adulteração controlada</h3>
+          <p>Pausa a requisição antes do envio para que os dados possam ser editados.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="modo-demo">
+          <span class="trilho"></span>
+          <span>Modo demonstração</span>
+        </label>
+      </div>
+
+      <p id="demo-vazio" class="vazio">Ative o modo demonstração e clique em votar. A requisição aparece aqui antes de ser enviada ao servidor.</p>
+
+      <div id="area-demo" hidden>
+        <div class="req-cab"><span class="metodo">POST</span><code>/api/votar</code></div>
+        <div class="campos">
+          <label class="campo" data-campo="jogador">
+            <span class="campo-nome">jogador <em>alterado</em></span>
+            <input id="req-jogador" spellcheck="false" autocomplete="off">
+          </label>
+          <label class="campo" data-campo="nonce">
+            <span class="campo-nome">nonce <em>alterado</em></span>
+            <input id="req-nonce" spellcheck="false" autocomplete="off">
+          </label>
+          <label class="campo" data-campo="mac">
+            <span class="campo-nome">mac <em>alterado</em></span>
+            <input id="req-mac" spellcheck="false" autocomplete="off">
+          </label>
+        </div>
+        <p class="dica">Para simular a adulteração, troque <code>jogador1</code> por <code>jogador2</code> e mantenha o MAC original.</p>
+        <div class="acoes">
+          <button class="btn-sec" id="restaurar">Restaurar original</button>
+          <button class="btn-pri" id="enviar-demo">Enviar requisição</button>
+        </div>
+        <div id="demo-resultado" class="resultado" hidden></div>
+      </div>
+    </section>
+
+    <!-- 03: hash simples (sem chave) -->
+    <section class="painel">
+      <div class="painel-cab">
+        <span class="num">03</span>
+        <div>
+          <h3>Hash simples: SHA-256 sem chave</h3>
+          <p>Um caractere diferente muda o resultado inteiro. Como não usa chave, qualquer pessoa consegue recalcular esse hash, por isso ele sozinho não autentica a mensagem.</p>
+        </div>
+      </div>
+      <div class="hashes">
+        <label class="campo">
+          <span class="campo-nome">Mensagem A</span>
+          <input id="texto1" value="voto=jogador1" spellcheck="false">
+          <code id="hash1" class="valor hash"></code>
+        </label>
+        <label class="campo">
+          <span class="campo-nome">Mensagem B</span>
+          <input id="texto2" value="voto=jogador2" spellcheck="false">
+          <code id="hash2" class="valor hash"></code>
+        </label>
+      </div>
+      <p id="hash-diff" class="hash-diff"></p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
