@@ -6,22 +6,25 @@ const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
-app.use('/assets', express.static('assets')); // fotos dos jogadores
+app.use(express.static('public')); // no Vercel, a pasta public/ é servida direto pela CDN
 
-// Chave secreta do MAC: lida da variável de ambiente (.env). Nunca vai para o frontend.
+// Chave secreta do MAC: lida da variável de ambiente (.env local ou Environment Variables do Vercel).
+// Nunca vai para o frontend.
 const CHAVE_SECRETA = process.env.MAC_SECRET;
 if (!CHAVE_SECRETA) {
-  console.error('Defina MAC_SECRET no arquivo .env');
-  process.exit(1);
+  console.error('MAC_SECRET não definida (arquivo .env ou variáveis de ambiente do Vercel).');
 }
+app.use('/api', (req, res, next) => {
+  if (!CHAVE_SECRETA) return res.status(500).json({ erro: 'MAC_SECRET não configurada no servidor.' });
+  next();
+});
 
 // "Banco de dados" em memória.
 const jogadores = {
   jogador1: { nome: 'Ronaldo Fenômeno', votos: 0 },
   jogador2: { nome: 'Zinedine Zidane', votos: 0 },
 };
-const noncesEmitidos = new Set(); // nonces entregues e ainda não usados
+const noncesUsados = new Set(); // nonces de votos já registrados
 
 // Monta a mensagem que será autenticada: dados do voto + nonce.
 function montarMensagem(jogador, nonce) {
@@ -53,7 +56,6 @@ app.post('/api/preparar-voto', (req, res) => {
   }
 
   const nonce = crypto.randomUUID();
-  noncesEmitidos.add(nonce);
 
   const mensagem = montarMensagem(jogador, nonce);
   const mac = calcularMac(mensagem);
@@ -83,9 +85,9 @@ app.post('/api/votar', (req, res) => {
     return res.status(400).json({ erro: 'MAC inválido. Voto rejeitado.', mensagemRecebida });
   }
 
-  // MAC válido: a mensagem é íntegra e foi autenticada pelo servidor.
+  // MAC válido: a mensagem é íntegra e foi gerada pelo servidor (só ele tem a chave).
   // O nonce só pode ser usado uma vez (impede reenviar o mesmo voto).
-  if (!noncesEmitidos.delete(nonce)) {
+  if (noncesUsados.has(nonce)) {
     console.log('Resultado        : ✗ nonce já utilizado');
     return res.status(400).json({ erro: 'Nonce já utilizado. Voto rejeitado.' });
   }
@@ -93,6 +95,7 @@ app.post('/api/votar', (req, res) => {
     return res.status(400).json({ erro: 'Jogador inexistente.' });
   }
 
+  noncesUsados.add(nonce);
   jogadores[jogador].votos++;
   console.log('Resultado        : ✓ MAC válido — voto aceito');
   res.json({ mensagem: 'Voto aceito.', mensagemRecebida, placar: jogadores });
@@ -101,12 +104,17 @@ app.post('/api/votar', (req, res) => {
 // Zera o placar para refazer os testes durante a apresentação.
 app.post('/api/zerar', (req, res) => {
   for (const id in jogadores) jogadores[id].votos = 0;
-  noncesEmitidos.clear();
+  noncesUsados.clear();
   console.log('\n--- Placar zerado ---');
   res.json(jogadores);
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Craque do Jogo rodando em http://localhost:${PORT}`);
-});
+// Local (npm start): sobe o servidor. No Vercel, o app exportado vira uma função serverless.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Craque do Jogo rodando em http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

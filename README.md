@@ -46,10 +46,10 @@ craque-do-jogo/
   .env              chave secreta (MAC_SECRET) e porta
   .gitignore        ignora node_modules e .env
   README.md         este guia
-  assets/
-    ronaldo.png     foto do Ronaldo Fenômeno
-    zidane.jpg      foto do Zidane
   public/
+    assets/
+      ronaldo.png   foto do Ronaldo Fenômeno
+      zidane.jpg    foto do Zidane
     index.html      interface (confronto, verificação, adulteração, hash)
     style.css       visual
     script.js       chamadas à API e exibição do resultado
@@ -80,6 +80,14 @@ Abra **http://localhost:3000**. Deixe o **terminal visível** ao lado do navegad
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
+
+## Publicar no Vercel (opcional)
+
+1. No Vercel, importe o repositório do GitHub. O *Framework Preset* deve ser **Express** (detectado pelo `server.js`); *Root Directory* = raiz do repositório.
+2. Em *Settings → Environment Variables*, crie **`MAC_SECRET`** com um valor aleatório longo (o `.env` não vai para o GitHub). Sem ela, a API responde `500: MAC_SECRET não configurada no servidor.`
+3. Faça o deploy (ou *Redeploy* depois de criar a variável).
+
+No Vercel, a pasta `public/` é servida pela CDN e o `server.js` exportado vira uma função serverless. Como os votos ficam em memória, o placar pode zerar sozinho quando a função reinicia. Para a apresentação, o mais previsível é rodar localmente com `npm start`, onde o terminal mostra o MAC recebido e o esperado.
 
 ## 4. Testar o voto legítimo (Cenário 1)
 
