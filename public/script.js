@@ -11,7 +11,9 @@ let timerToast;
 
 // ---------- Placar ----------
 async function atualizarPlacar() {
-  const placar = await (await fetch('/api/votos')).json();
+  const res = await fetch('/api/votos');
+  const placar = await res.json().catch(() => ({}));
+  if (!res.ok) return mostrarResultado(false, placar.erro || `Erro no servidor (HTTP ${res.status})`);
   const total = placar.jogador1.votos + placar.jogador2.votos;
 
   for (const id of ['jogador1', 'jogador2']) {
@@ -52,7 +54,11 @@ async function prepararVoto(jogador) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jogador }),
   });
-  const dados = await res.json();
+  const dados = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    mostrarResultado(false, dados.erro || `Erro no servidor (HTTP ${res.status})`);
+    throw new Error(dados.erro);
+  }
 
   $('info-mensagem').textContent = dados.mensagem;
   $('info-mac').textContent = dados.mac;
