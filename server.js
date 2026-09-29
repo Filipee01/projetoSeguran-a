@@ -3,10 +3,11 @@
 
 const express = require('express');
 const crypto = require('crypto');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public')); // no Vercel, a pasta public/ é servida direto pela CDN
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Chave secreta do MAC: lida da variável de ambiente (.env local ou Environment Variables do Vercel).
 // Nunca vai para o frontend.
