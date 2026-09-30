@@ -10,7 +10,7 @@ Projeto acadêmico (Criptografia / Segurança Computacional). Demonstra como um 
 
 1. Instale o **Node.js 20.6 ou superior** (https://nodejs.org, versão LTS). Confira com `node --version`.
 2. Abra um terminal **dentro da pasta `craque-do-jogo`** (no VS Code: *Terminal → New Terminal*).
-3. Só na primeira vez: `npm install`
+3. Só na primeira vez: `npm install` e crie o `.env` copiando o modelo (`copy .env.example .env` no Windows, `cp .env.example .env` no Linux/Mac). Depois troque o valor de `MAC_SECRET` por uma chave aleatória.
 4. Para ligar: `npm start` → deve aparecer `Craque do Jogo rodando em http://localhost:3000`
 5. Abra **http://localhost:3000** no navegador. Deixe o terminal visível ao lado.
 6. Para desligar: `Ctrl + C` no terminal.
@@ -43,14 +43,15 @@ Clica "Votar" no Ronaldo
 craque-do-jogo/
   package.json      dependências e script "npm start"
   server.js         servidor Express + geração/verificação do MAC
-  .env              chave secreta (MAC_SECRET) e porta
+  .env              chave secreta (MAC_SECRET) e porta — local, não vai para o GitHub
+  .env.example      modelo do .env (este vai para o GitHub)
   .gitignore        ignora node_modules e .env
   README.md         este guia
   public/
     assets/
       ronaldo.png   foto do Ronaldo Fenômeno
       zidane.jpg    foto do Zidane
-    index.html      interface (confronto, verificação, adulteração, hash)
+    index.html      interface (confronto, verificação, adulteração)
     style.css       visual
     script.js       chamadas à API e exibição do resultado
 ```
@@ -60,8 +61,8 @@ craque-do-jogo/
 | Arquivo | Papel |
 |---|---|
 | `server.js` | Lê a chave do `.env`; `montarMensagem()` define exatamente o que é autenticado; `calcularMac()` chama `crypto.createHmac('sha256', chave)`; `macsIguais()` compara com `crypto.timingSafeEqual`; rotas `GET /api/votos`, `POST /api/preparar-voto`, `POST /api/votar` e `POST /api/zerar` (zera o placar para refazer os testes). Imprime no terminal o **MAC recebido × MAC esperado** a cada voto. |
-| `public/script.js` | Pede o voto preparado, envia para verificação e mostra o resultado. No modo demonstração, **pausa** a requisição em campos editáveis (`jogador`, `nonce`, `mac`) e marca como "alterado" o campo que for modificado. Também calcula SHA-256 (sem chave) no navegador para o cenário opcional. |
-| `public/index.html` | Confronto dos dois jogadores com placar e barra de percentual; seções 01 "Verificação da mensagem", 02 "Adulteração controlada" e 03 "Hash simples". O resultado de cada voto também aparece em um aviso na parte de baixo da tela. |
+| `public/script.js` | Pede o voto preparado, envia para verificação e mostra o resultado. No modo demonstração, **pausa** a requisição em campos editáveis (`jogador`, `nonce`, `mac`) e marca como "alterado" o campo que for modificado. |
+| `public/index.html` | Confronto dos dois jogadores com placar e barra de percentual; seções 01 "Verificação da mensagem" e 02 "Adulteração controlada". O resultado de cada voto também aparece em um aviso na parte de baixo da tela. |
 | `.env` | `MAC_SECRET=...` — a chave do MAC. Nunca vai para o frontend. |
 
 ## 3. Instalar e executar
@@ -143,11 +144,13 @@ No Vercel, a pasta `public/` é servida pela CDN e o `server.js` exportado vira 
 
 (No Firefox dá também para usar Network → clicar na requisição `votar` → **Edit and Resend**.)
 
-## 6. Cenário opcional — hash simples × MAC
+## 6. Hash simples × MAC (explicado nos slides)
 
-Na seção **03 Hash simples**: os campos `voto=jogador1` e `voto=jogador2` diferem em **um caractere**, e os SHA-256 são completamente diferentes. Os caracteres diferentes do hash B aparecem em vermelho, com a contagem (ex.: "62 de 64 caracteres são diferentes"). Edite qualquer letra e veja o hash mudar na hora.
+O cenário 3 do enunciado era opcional e não foi implementado no site; a diferença entre hash e MAC é explicada nos slides 5 e 6.
 
-Ponto-chave: esse hash é calculado **no navegador, sem chave**. Se o sistema usasse só `SHA-256(mensagem)`, o atacante alteraria o voto e **recalcularia o hash sozinho**. O MAC resolve isso porque depende da **chave secreta**, que só o servidor tem.
+- `SHA-256("voto=jogador1")` e `SHA-256("voto=jogador2")` diferem em **um caractere** na entrada, mas os hashes são quase totalmente diferentes (62 de 64 caracteres).
+- O hash **não usa chave**: se o sistema usasse só `SHA-256(mensagem)`, o atacante alteraria o voto e **recalcularia o hash sozinho**.
+- O MAC resolve isso porque depende da **chave secreta**, que só o servidor tem.
 
 ## 7. O MAC no código
 
@@ -183,7 +186,7 @@ if (!macsIguais(mac, macEsperado)) → 400 "MAC inválido. Voto rejeitado."
 | **Autenticação de mensagens** — garantir que a mensagem veio de quem diz e não foi alterada | Só quem tem a chave (servidor) consegue produzir um MAC válido para um voto |
 | **Integridade dos dados** | Qualquer alteração em `jogador` ou `nonce` muda o MAC esperado → rejeição |
 | **MAC** — código gerado a partir da mensagem **e de uma chave secreta**, anexado à mensagem; o receptor recalcula e compara | `calcularMac()` + comparação em `/api/votar` |
-| **Função hash de uma via** — entrada de tamanho variável, saída fixa; inviável achar a entrada a partir do hash ou duas entradas com o mesmo hash | SHA-256 dentro do HMAC; seção 03 "Hash simples" mostra saída fixa de 256 bits e mudança total com 1 caractere |
+| **Função hash de uma via** — entrada de tamanho variável, saída fixa; inviável achar a entrada a partir do hash ou duas entradas com o mesmo hash | SHA-256 dentro do HMAC; o slide 5 mostra a saída fixa de 256 bits e a mudança quase total com 1 caractere |
 | **SHA-256 / SHA-384 / SHA-512** (família SHA-2) | `createHmac('sha256', ...)`; basta trocar o nome para usar SHA-384/512 |
 | **Hash × MAC** | Hash sozinho não tem chave (qualquer um recalcula); MAC exige a chave secreta |
 | Mensagem única (evitar repetição) | `nonce` incluído na mensagem autenticada |

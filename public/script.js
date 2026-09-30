@@ -156,31 +156,4 @@ $('zerar').addEventListener('click', async () => {
   atualizarPlacar();
 });
 
-// ---------- Hash simples: SHA-256 (sem chave) calculado no navegador via Web Crypto ----------
-async function sha256(texto) {
-  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
-  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function atualizarHashes() {
-  const h1 = await sha256($('texto1').value);
-  const h2 = await sha256($('texto2').value);
-  let diferentes = 0;
-
-  // destaca em vermelho os caracteres do hash B que diferem do hash A
-  $('hash1').textContent = h1;
-  $('hash2').innerHTML = [...h2].map((ch, i) => {
-    if (ch === h1[i]) return ch;
-    diferentes++;
-    return `<span class="dif">${ch}</span>`;
-  }).join('');
-
-  $('hash-diff').innerHTML = diferentes
-    ? `<strong>${diferentes} de 64</strong> caracteres do hash são diferentes.`
-    : 'As mensagens são iguais, então os hashes também são.';
-}
-$('texto1').addEventListener('input', atualizarHashes);
-$('texto2').addEventListener('input', atualizarHashes);
-
 atualizarPlacar();
-atualizarHashes();

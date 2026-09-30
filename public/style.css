@@ -252,13 +252,6 @@ input:focus { outline: none; border-color: var(--franca); box-shadow: 0 0 0 3px 
 
 #demo-resultado { margin-top: 16px; }
 
-/* ---------- Hash ---------- */
-.hashes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.hash { font-size: .8rem; line-height: 1.6; }
-.hash .dif { color: var(--erro); }
-.hash-diff { margin: 14px 0 0; font-size: .88rem; color: var(--suave); }
-.hash-diff strong { color: var(--texto); }
-
 /* ---------- Toast ---------- */
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
@@ -273,7 +266,7 @@ input:focus { outline: none; border-color: var(--franca); box-shadow: 0 0 0 3px 
 
 /* ---------- Responsivo ---------- */
 @media (max-width: 760px) {
-  .etapas, .campos, .hashes { grid-template-columns: 1fr; }
+  .etapas, .campos { grid-template-columns: 1fr; }
   .painel-cab { flex-wrap: wrap; }
   .switch { width: 100%; }
 }
